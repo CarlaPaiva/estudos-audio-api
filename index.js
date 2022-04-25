@@ -6,7 +6,7 @@ const audioElement = document.createElement('audio');
 // cria um MediaElement a partir do context e do input audio
 const track = audioContext.createMediaElementSource(audioElement);
 const gainNode = audioContext.createGain();
-
+const maxDelay = 5.0;
 
 input.addEventListener('change', () => {
 
@@ -65,9 +65,37 @@ function panControl(){
     track.connect(gainNode).connect(panner).connect(audioContext.destination);
 }
 
+function delayControl(){
+    var delayEffect = audioContext.createDelay(maxDelay);
+    const delayControl = document.querySelector('#delay');
+    delayControl.addEventListener('input', () => {
+        delayEffect.delayTime.setValueAtTime(parseFloat(delayControl.value), audioContext.currentTime);
+    });
+
+    track.connect(delayEffect).connect(audioContext.destination);
+}
+
+function filterControl(){
+    const feedforward = [0.5, 0.7, 0.2, -3.9, 2.0];
+    const feedback = [-1.5];
+    var envelopAudio = audioContext.createIIRFilter(feedforward, feedback);
+    const envelopControl = document.querySelector('#filter');
+    envelopControl.addEventListener('click', () => {
+        
+        if (envelopControl.checked)
+            track.connect(gainNode).connect(envelopAudio).connect(audioContext.destination);
+        else{
+            gainNode.disconnect(envelopAudio);
+            track.connect(gainNode).connect(audioContext.destination);
+        }
+    });
+}
 
 function audioResources(){
     playPause();
     volumeControls();
     panControl();    
+    delayControl();
+    filterControl();
+    
 }
